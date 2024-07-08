@@ -4,6 +4,7 @@ import (
 	"arkis_test/database"
 	"arkis_test/processor"
 	"arkis_test/queue"
+	"arkis_test/simulation"
 	"context"
 	"os"
 
@@ -11,19 +12,27 @@ import (
 )
 
 func main() {
+
 	ctx := context.Background()
 
-	inputQueue, err := queue.New(os.Getenv("RABBITMQ_URL"), "input-A")
-	if err != nil {
-		log.WithError(err).Panic("Cannot create input queue")
-	}
+	// define queues names:
+	var inputNames []string = []string{"A-input", "B-input", "C-input"}
+	var outputNames []string = []string{"A-output", "B-output", "C-output"}
 
-	outputQueue, err := queue.New(os.Getenv("RABBITMQ_URL"), "output-A")
-	if err != nil {
-		log.WithError(err).Panic("Cannot create output queue")
-	}
+	// create input and output queues:
+	var inputs, outputs []queue.Queue = queue.CreateQueues(
+		inputNames,
+		outputNames,
+	)
 
 	log.Info("Application is ready to run")
 
-	processor.New(inputQueue, outputQueue, database.D{}).Run(ctx)
+	// Hack for testing the application instead of implementing a seperate client...
+	// if enviroment variable SIMULATION is set to true, start the simulation:
+	if os.Getenv("SIMULATION") == "true" {
+		log.Info("Main: Starting simulation")
+		simulation.StartTestSimulation(ctx, inputs, outputs)
+	}
+
+	processor.New(inputs, outputs, database.D{}).Run(ctx)
 }

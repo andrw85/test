@@ -13,11 +13,13 @@ services:
       timeout: 5s
       retries: 10
 
+
   service:
     build:
       dockerfile: Dockerfile
     environment:
       RABBITMQ_URL: amqp://rabbitmq:5672
+    env_file: .env
     networks:
       - rabbit_net
     depends_on:
